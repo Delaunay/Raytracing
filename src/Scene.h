@@ -22,9 +22,9 @@ public:
             new Sphere( 1e5, Vector3d(   0, -1e5 - 40.8, 0),    Color(.75, .75, .75)),
             new Sphere( 1e5, Vector3d(   0,  1e5 + 40.8, 0),    Color(.75, .75, .75)),
 
-            new Sphere(16.5, Vector3d( -23, -24.3, -34.6),      Color(.999, .999, .999)),
+            new Sphere(16.5, Vector3d( -23, -24.3, -34.6),      Color(.999, .999, .999), 0, Specular),
             new Sphere(16.5, Vector3d(  23, -24.3, -3.6),       Color(.999, .999, .999)),
-            new Sphere( 8.5, Vector3d(   0,  24.3 , 0),         Color(0.1, 0.1, 0.1),            20)
+            new Sphere( 8.5, Vector3d(   0,  24.3 , 0),         Color(0.1, 0.1, 0.1), 20)
         };
     }
 
@@ -37,7 +37,7 @@ public:
     const Drawable& operator[] (int i) const {  return *_objects[i]; }
 
     // This is scene job
-    bool intersect(const Ray& r, double &t, int&id){
+    bool intersect(const Ray& r, double &t, int&id) const {
 
         t = infinity();
 

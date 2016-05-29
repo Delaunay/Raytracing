@@ -13,11 +13,11 @@ public:
         Ray(org, dest)
     {}
 
-    Vector3d position()   {   return origin(); }
+    Vector3d position() const  {   return origin(); }
     void set_position(const Vector3d org) {   set_origin(org); }
     void set_position(double x, double y, double z) {   set_origin(x, y, z); }
 
-    Vector3d orientation()     {   return dest(); }
+    Vector3d orientation() const    {   return dest(); }
     void set_orientation(const Vector3d org) {   set_dest(org); }
     void set_orientation(double x, double y, double z) {   set_dest(x, y, z); }
 

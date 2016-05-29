@@ -15,6 +15,9 @@ SET(PROJECT_TEST_HDS
     Light.h
     Camera.h
     Render.h
+    ARender.h
+    Image.h
+    PaintDevice.h
 )
 
 SET(PROJECT_TEST_SRC

@@ -17,6 +17,12 @@ double infinity(){
 }
 
 namespace raytracing{
+
+enum Material{
+    Diffuse,
+    Specular,
+};
+
 /**
  *  Drawable object. This is the base class used to define new
  *  object to be rendered
@@ -24,8 +30,8 @@ namespace raytracing{
 class Drawable{
 public:
 
-    Drawable(Vector3d pos = {0, 0, 0}, Color color = {50, 50, 50}, double light = 0):
-        _position(pos), _color(color), _light(light)
+    Drawable(Vector3d pos = {0, 0, 0}, Color color = {50, 50, 50}, double light = 0, Material m = Diffuse):
+        _position(pos), _color(color), _light(light), _material(m)
     {}
 
     ~Drawable(){}
@@ -44,10 +50,14 @@ public:
     bool emit_light() const  { return _light > 0; }
     void set_emit_light(double intensity){  _light = intensity; }
 
+    Material material() const { return _material; }
+    void set_material(Material m) { _material = m;  }
+
 private:
     Vector3d _position;
     Color    _color;
     double   _light;
+    Material _material;
 };
 
 }
