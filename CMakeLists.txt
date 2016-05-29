@@ -2,7 +2,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
 
 # project name + language used
-PROJECT(project_test CXX)
+PROJECT(raytracing CXX)
 
 # debug/release
 SET(CMAKE_RELEASE_POSTFIX "")                  # Release is the default

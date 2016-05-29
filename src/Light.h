@@ -1,0 +1,6 @@
+#ifndef RAYTRACING_LIGHT_HEADER_
+#define RAYTRACING_LIGHT_HEADER_
+
+
+
+#endif
