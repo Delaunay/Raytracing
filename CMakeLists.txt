@@ -8,6 +8,9 @@ PROJECT(raytracing CXX)
 SET(CMAKE_RELEASE_POSTFIX "")                  # Release is the default
 SET(CMAKE_DEBUG_POSTFIX "-debug")
 
+SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-fopenmp")
+
+
 # Compiler-flag
 IF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
     MESSAGE(STATUS "Building Debug Version")

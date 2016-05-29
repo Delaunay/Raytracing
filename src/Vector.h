@@ -17,6 +17,9 @@ public:
         _data[2] = z;
     }
 
+    // Comparaison
+    bool any() const {  return x() > 0 || y() > 0 || z() > 0;}
+
     // element wise operator
     Vector3 operator+(const Vector3 b) const {  return Vector3(x() + b.x(), y() + b.y(), z() + b.z()); }
     Vector3 operator-(const Vector3 b) const {  return Vector3(x() - b.x(), y() - b.y(), z() - b.z()); }

@@ -19,6 +19,12 @@ public:
     ColorT operator-(const Vector3<T> v) const {  return ColorT(r() - v.x(), g() - v.y(), b() + v.z()); }
     ColorT operator*(const Vector3<T> v) const {  return ColorT(r() * v.x(), g() * v.y(), b() * v.z()); }
 
+    // constant
+    ColorT operator+(const T v) const {  return ColorT(r() + v, g() + v, b() + v); }
+    ColorT operator-(const T v) const {  return ColorT(r() - v, g() - v, b() - v); }
+    ColorT operator*(const T v) const {  return ColorT(r() * v, g() * v, b() * v); }
+    ColorT operator/(const T v) const {  return ColorT(r() / v, g() / v, b() / v); }
+
     static double clamp(double x)  { return x > 1 ? 1 : x < 0 ? 0 : x; }
     static int to_rgb(double x) { return int(pow(clamp(x), 1.0 / 2.2) * 255 + .5);}
 

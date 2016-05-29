@@ -18,6 +18,8 @@ SET(PROJECT_TEST_HDS
     ARender.h
     Image.h
     PaintDevice.h
+    Debug.h
+    Utils.h
 )
 
 SET(PROJECT_TEST_SRC
@@ -35,7 +37,7 @@ SET_PROPERTY(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 14)
 # ==========================
 
 ADD_EXECUTABLE(main main.cpp)
-TARGET_LINK_LIBRARIES(main raytracing)
+TARGET_LINK_LIBRARIES(main raytracing -fopenmp)
 SET_PROPERTY(TARGET main PROPERTY CXX_STANDARD 14)
 
 

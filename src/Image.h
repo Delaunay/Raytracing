@@ -18,11 +18,11 @@ public:
         PaintDevice(w, h), _img(size())
     {}
 
-    virtual Pixel pixel(int i, int j) const {   return _img[i * col() + j]; }
-    virtual Pixel& pixel(int i, int j)      {   return _img[i * col() + j]; }
+    virtual Pixel  pixel(int i, int j) const {   return _img[i * col() + j]; }
+    virtual Pixel& pixel(int i, int j)       {   return _img[i * col() + j]; }
 
-    virtual Pixel operator[] (int i) const  {   return _img[i]; }
-    virtual Pixel& operator[] (int i)       {   return _img[i]; }
+    virtual Pixel  operator[] (int i) const  {   return _img[i]; }
+    virtual Pixel& operator[] (int i)        {   return _img[i]; }
 
     int row() const {   return height(); }
     int col() const {   return width();  }

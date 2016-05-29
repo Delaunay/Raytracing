@@ -9,7 +9,7 @@ namespace raytracing{
 class Sphere : public Drawable {
 public:
 
-    Sphere(double r=1, Vector3d pos = {0, 0, 0}, Color color = {50, 50, 50}, double light = 0, Material m = Diffuse):
+    Sphere(double r=1, Vector3d pos = {0, 0, 0}, Color color = {0.5, 0.5, 0.5}, Color light = {0, 0, 0}, Material m = Diffuse):
         Drawable(pos, color, light, m), _radius(r)
     { }
 

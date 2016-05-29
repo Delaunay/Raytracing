@@ -13,24 +13,17 @@ class Scene
 {
 public:
 
-    Scene(){
-        // default scene
-        _objects = {
-            new Sphere( 1e5, Vector3d(-1e5 - 49, 0, 0),         Color(.75, .25, .25)),
-            new Sphere( 1e5, Vector3d( 1e5 + 49, 0, 0),         Color(.25, .25, .75)),
-            new Sphere( 1e5, Vector3d(   0,    0, -1e5 - 81.6), Color(.75, .75, .75)),
-            new Sphere( 1e5, Vector3d(   0, -1e5 - 40.8, 0),    Color(.75, .75, .75)),
-            new Sphere( 1e5, Vector3d(   0,  1e5 + 40.8, 0),    Color(.75, .75, .75)),
-
-            new Sphere(16.5, Vector3d( -23, -24.3, -34.6),      Color(.999, .999, .999), 0, Specular),
-            new Sphere(16.5, Vector3d(  23, -24.3, -3.6),       Color(.999, .999, .999)),
-            new Sphere( 8.5, Vector3d(   0,  24.3 , 0),         Color(0.1, 0.1, 0.1), 20)
-        };
-    }
+    Scene(){ }
 
     ~Scene(){
         for(auto i: _objects)
             delete i;
+    }
+
+    template<typename T, typename... Args>
+    void add_object(Args&&...args){
+        typedef typename std::remove_const<T>::type Tc;
+        _objects.push_back(new Tc(std::forward<Args>(args)...));
     }
 
     Drawable& operator[] (int i) {  return *_objects[i]; }
