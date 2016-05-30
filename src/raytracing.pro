@@ -23,10 +23,12 @@ HEADERS += \
     Image.h \
     PaintDevice.h \
     Debug.h \
-    Utils.h
+    Utils.h \
+    ../dependencies/PhotonMap.h
 
 SOURCES += \
     main.cpp \
     Scene.cpp \
     Drawable.cpp \
-    Sphere.cpp
+    Sphere.cpp \
+    ../dependencies/PhotonMap.cpp

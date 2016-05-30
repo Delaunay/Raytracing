@@ -24,6 +24,13 @@ public:
     void add_object(Args&&...args){
         typedef typename std::remove_const<T>::type Tc;
         _objects.push_back(new Tc(std::forward<Args>(args)...));
+
+        if (_light == nullptr){
+            Drawable* last = _objects[size() - 1];
+
+            if (last->emit_light())
+                _light = last;
+        }
     }
 
     Drawable& operator[] (int i) {  return *_objects[i]; }
@@ -46,8 +53,13 @@ public:
         return t < infinity();
     }
 
-private:
+    int size(){ return _objects.size();  }
 
+    // return light position
+    Vector3d light() const {    return _light->position(); }
+
+private:
+    Drawable* _light{nullptr};
     std::vector<Drawable*> _objects;
 };
 

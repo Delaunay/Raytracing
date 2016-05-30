@@ -8,12 +8,17 @@
 #include "Utils.h"
 #include "Debug.h"
 
+#define PHOTON_MAPPING 1
+
+#if PHOTON_MAPPING
+#   include "../dependencies/PhotonMap.h"
+#endif
+
 namespace raytracing{
 
 class RTRender: public AbstractRender
 {
 public:
-    int bouncing_ray{1000};
 
     Color specular(Ray r, Vector3d x, Vector3d n, const Drawable& obj, const Scene& scene){
         Color color;
@@ -29,15 +34,17 @@ public:
 
             const Drawable &obj2 = scene[id];
 
-            //Vector3d newX = ray.o + ray.d * t;
-           // Vector3d newN = (newX - obj2.p).norm();
+        #if PHOTON_MAPPING
+            Vector3d newX = ray.origin() + ray.dest() * t;
+            Vector3d newN = (newX - obj2.position()).norm();
 
-            //Vector3d sirrad;
-            //pm.irradiance_estimate(sirrad, newX, newN, DISTANCE, NUM_PHOTONS);
+            Vector3d sirrad;
+            photon_map.irradiance_estimate(sirrad, newX, newN, distance, num_photons);
 
-            //DEBUG_VEC(sirrad);
-
+            color = color + sirrad * obj2.color();
+        #else
             color = color + obj.color() * obj2.light();
+        #endif
         }
 
         return color / double(bouncing_ray);
@@ -72,10 +79,17 @@ public:
 
             const Drawable &obj2 = scene[id];
 
-            //Vector3d newX = ray.origin() + ray.dest() * t;
-            //Vector3d newN = (newX - obj2.position()).norm();
+        #if PHOTON_MAPPING
+            Vector3d newX = ray.origin() + ray.dest() * t;
+            Vector3d newN = (newX - obj2.position()).norm();
 
+            Vector3d irrad;
+            photon_map.irradiance_estimate(irrad, newX, newN, distance, num_photons);
+
+            color = color + obj.color() * obj2.light() + irrad * obj.color();
+        #else
             color = color + obj.color() * obj2.light();
+        #endif
         }
         return color / double(bouncing_ray);
     }
@@ -112,6 +126,9 @@ public:
     }
 
     void render(const Scene& scene, const Camera& camera, PaintDevice& device){
+    #if PHOTON_MAPPING
+        emit_photons(scene);
+    #endif
 
         // indice / hint : tan(27 / 180.0 * M_PI ) == 0.5095
         int width = device.width();
@@ -140,10 +157,125 @@ public:
         printf("\n");
     }
 
+    int bouncing_ray{50};
 
-private:
+#if PHOTON_MAPPING
 
-    std::vector<ColorT<int>> _image;
+    double distance{0.5};
+    int num_photons{500000};
+    int max_reflect{5};
+
+    // probabitility of reflection
+    float pDiffuse  = 0.5;
+    float pSpecular = 0.5;
+
+    PhotonMap photon_map{num_photons * max_reflect};
+#   define MAX_PHOTONS num_photons * max_reflect
+
+    void emit_photons(const Scene& scene){
+        float x = 0, y = 0, z = 0;
+        Vector3d power(1.0, 1.0, 1.0);
+
+        for (int i = 0; i < num_photons; ++i) {
+            // Generate Origin offset
+            x = 0.1 * rand_num(-1, 1);
+            z = 0.1 * rand_num(-1, 1);
+
+            Vector3d offset = scene.light() + Vector3d(x, y, z);
+
+            // Generate Direction
+            do {
+                x = rand_num(-1, 1);
+                y = rand_num(-1, 0);
+                z = rand_num(-1, 1);
+            } while (x * x + y * y + z * z > 1 || y == 0);
+
+            Vector3d dir(x, y, z);
+
+            photon_map.store(power, offset, dir);
+
+            Ray photon_ray(offset, dir);
+
+            trace_photon(scene, photon_ray, power, 0);
+        }
+
+        photon_map.balance();
+        photon_map.scale_photon_power(1.0 / num_photons);
+    }
+
+    void trace_photon(const Scene& scene, Ray pr, Vec power, int depth) {
+
+        if (depth >= max_reflect)
+            return;
+
+        double t;
+        int id = 0;
+
+        // find collision
+        if (!scene.intersect(pr, t, id))
+            return;
+
+        const Drawable &obj = scene[id];
+
+        Vector3d x   = pr.origin() + pr.dest() * t;
+        Vector3d n   = (x - obj.position()).norm();
+        Vector3d dir;
+        Vector3d reflect_power;
+
+        float nrand = rand_num(0, 1);
+        photon_map.store(power, pr.origin(), pr.dest());
+
+        // Diffuse
+        if (nrand < pDiffuse){
+        //if (obj.material() == Diffuse && pDiffuse < nrand){
+            dir = diffuse_reflection(n);
+            reflect_power = power * (obj.color() * 1.0 / pDiffuse);
+        }
+        // Specular
+        else if ((pDiffuse < nrand) && (nrand < (pDiffuse + pSpecular))){
+        //else if (obj.material() == Specular && pSpecular < nrand){
+            dir = pr.dest() - (n * n.dot(pr.dest())) * 2;
+            reflect_power = power * (obj.color() * 1.0 / pSpecular);    // THIS IS SUSPICIOUS
+        }
+
+        // absorb
+        else{
+            DEBUG("PHOTON WAS ABSORBED");
+            return ;
+        }
+
+        pr.set_origin(x);
+        pr.set_dest(dir.norm());
+
+        trace_photon(scene, pr, reflect_power, depth + 1);
+    }
+
+    Vector3d diffuse_reflection(Vector3d n) {
+        float x, y, z;
+        Vector3d dir;
+
+        do {
+            // new direction (rejection sampling)
+            do {
+                x = rand_num(0, 1);
+                y = rand_num(0, 1);
+                z = rand_num(0, 1);
+            } while (x * x + y * y + z * z > 1);
+
+            x   = 2 * (x - 0.5);
+            y   = 2 * (y - 0.5);
+            z   = 2 * (z - 0.5);
+
+            dir = Vector3d(x, y, z);
+
+        } while ((dir * n) >= 0);
+
+        return dir;
+    }
+
+
+#endif
+
 };
 }
 

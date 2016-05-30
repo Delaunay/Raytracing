@@ -34,7 +34,7 @@ public:
         _position(pos), _color(color), _light(light), _material(m)
     {}
 
-    ~Drawable(){}
+    virtual ~Drawable(){}
 
     // Intersection
     virtual double intersect(const Ray& ray) const = 0;

@@ -18,7 +18,9 @@ public:
     }
 
     // Comparaison
-    bool any() const {  return x() > 0 || y() > 0 || z() > 0;}
+    bool any()     const {  return x()  > 0 || y()  > 0 || z()  > 0;}
+    bool not_neg() const {  return x() >= 0 && y() >= 0 && z() >= 0;}
+    bool operator>=(const T b) const {  return  x() >= b && y() >= b && z() >= b; }
 
     // element wise operator
     Vector3 operator+(const Vector3 b) const {  return Vector3(x() + b.x(), y() + b.y(), z() + b.z()); }
