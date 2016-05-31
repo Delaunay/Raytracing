@@ -1,5 +1,4 @@
-/* JSB: Separated header file from main file of Jensen, 1991 PhotonMap class:
-   Implementation in PhotonMap.cpp */
+/* Jensen, 1991 PhotonMap class:Implementation in PhotonMap.cpp */
 
 #ifndef PHOTONMAP_H
 #define PHOTONMAP_H

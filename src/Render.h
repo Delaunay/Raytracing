@@ -20,7 +20,7 @@ class RTRender: public AbstractRender
 {
 public:
 
-    Color specular(Ray r, Vector3d x, Vector3d n, const Drawable&, const Scene& scene){
+    Color specular(Ray r, Vector3d x, Vector3d n, const Drawable& obj, const Scene& scene){
         Color color;
 
         for (int i = 0; i < bouncing_ray; i++) {
@@ -41,9 +41,9 @@ public:
             Vector3d sirrad;
             photon_map.irradiance_estimate(sirrad, newX, newN, distance, num_photons);
 
-            color = color + sirrad * obj2.color();
+            color = color + sirrad * obj2.color() + obj2.color() * obj2.color();
         #else
-            color = color + obj.color() * obj2.light();
+            color = color + obj2.color() * obj2.color();
         #endif
         }
 
@@ -196,7 +196,7 @@ public:
         }
 
         photon_map.balance();
-        //photon_map.scale_photon_power(1.0 / log(num_photons));
+        photon_map.scale_photon_power(1.0 / log(num_photons));
     }
 
     void trace_photon(const Scene& scene, Ray pr, Vec power, int depth) {
@@ -222,19 +222,19 @@ public:
         photon_map.store(power, pr.origin(), pr.dest());
 
         // Diffuse
-        //if (nrand < pDiffuse){
-        //    dir = diffuse_reflection(n);
-        //    reflect_power = power * obj.color() / pDiffuse;
-        //}
+        if (nrand < pDiffuse){
+            dir = diffuse_reflection(n);
+            reflect_power = power * obj.color() / pDiffuse;
+        }
         // Specular
-        //else if ((pDiffuse < nrand) && (nrand < (pDiffuse + pSpecular))){
+        else if ((pDiffuse < nrand) && (nrand < (pDiffuse + pSpecular))){
             dir = pr.dest() - (n * n.dot(pr.dest())) * 2;
             reflect_power = power * obj.color() / pSpecular;
-        //}
+        }
         // absorb
-        //else{
-        //    return ;
-        //}
+        else{
+            return ;
+        }
 
         pr.set_origin(x);
         pr.set_dest(dir.norm());
