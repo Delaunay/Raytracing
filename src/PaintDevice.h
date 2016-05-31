@@ -33,7 +33,7 @@ public:
     virtual Pixel& operator[] (int i) = 0;
 
     // save rendered image to file
-    void save_image(const char* name, ImageFormat fmt = PPM){
+    void save_image(const char* name, ImageFormat = PPM){
 
         FILE *f = fopen(name, "w");
         PaintDevice& img = *this;

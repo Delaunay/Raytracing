@@ -20,7 +20,7 @@ class RTRender: public AbstractRender
 {
 public:
 
-    Color specular(Ray r, Vector3d x, Vector3d n, const Drawable& obj, const Scene& scene){
+    Color specular(Ray r, Vector3d x, Vector3d n, const Drawable&, const Scene& scene){
         Color color;
 
         for (int i = 0; i < bouncing_ray; i++) {
@@ -50,7 +50,7 @@ public:
         return color / double(bouncing_ray);
     }
 
-    Color diffuse(Ray r, Vector3d x, Vector3d n, const Drawable& obj, const Scene& scene){
+    Color diffuse(Ray, Vector3d x, Vector3d n, const Drawable& obj, const Scene& scene){
         Color color;
 
         for (int i = 0; i < bouncing_ray; i++) {
@@ -109,7 +109,6 @@ public:
         if (obj.emit_light())
             return obj.light();
 
-        // Compute correct color
         Vector3d x = r.origin() + r.dest() * t;
         Vector3d n = (x - obj.position()).norm();
 
@@ -129,11 +128,11 @@ public:
     #if PHOTON_MAPPING
         emit_photons(scene);
     #endif
-
-        // indice / hint : tan(27 / 180.0 * M_PI ) == 0.5095
         int width = device.width();
         int height = device.height();
 
+        // FIXME: Hardcoded value
+        // indice / hint : tan(27 / 180.0 * M_PI ) == 0.5095
         Vector3d cx = Vector3d(width * 0.5095 / height, 0., 0.);
         Vector3d cy = (cx % camera.orientation()).norm() * 0.5095;
         Color pix;
@@ -157,7 +156,7 @@ public:
         printf("\n");
     }
 
-    int bouncing_ray{50};
+    int bouncing_ray{100};
 
 #if PHOTON_MAPPING
 
@@ -191,16 +190,13 @@ public:
             } while (x * x + y * y + z * z > 1 || y == 0);
 
             Vector3d dir(x, y, z);
-
-            photon_map.store(power, offset, dir);
-
             Ray photon_ray(offset, dir);
 
             trace_photon(scene, photon_ray, power, 0);
         }
 
         photon_map.balance();
-        photon_map.scale_photon_power(1.0 / num_photons);
+        //photon_map.scale_photon_power(1.0 / log(num_photons));
     }
 
     void trace_photon(const Scene& scene, Ray pr, Vec power, int depth) {
@@ -226,23 +222,19 @@ public:
         photon_map.store(power, pr.origin(), pr.dest());
 
         // Diffuse
-        if (nrand < pDiffuse){
-        //if (obj.material() == Diffuse && pDiffuse < nrand){
-            dir = diffuse_reflection(n);
-            reflect_power = power * (obj.color() * 1.0 / pDiffuse);
-        }
+        //if (nrand < pDiffuse){
+        //    dir = diffuse_reflection(n);
+        //    reflect_power = power * obj.color() / pDiffuse;
+        //}
         // Specular
-        else if ((pDiffuse < nrand) && (nrand < (pDiffuse + pSpecular))){
-        //else if (obj.material() == Specular && pSpecular < nrand){
+        //else if ((pDiffuse < nrand) && (nrand < (pDiffuse + pSpecular))){
             dir = pr.dest() - (n * n.dot(pr.dest())) * 2;
-            reflect_power = power * (obj.color() * 1.0 / pSpecular);    // THIS IS SUSPICIOUS
-        }
-
+            reflect_power = power * obj.color() / pSpecular;
+        //}
         // absorb
-        else{
-            DEBUG("PHOTON WAS ABSORBED");
-            return ;
-        }
+        //else{
+        //    return ;
+        //}
 
         pr.set_origin(x);
         pr.set_dest(dir.norm());
