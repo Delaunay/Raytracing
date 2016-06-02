@@ -5,22 +5,21 @@
 #include <vector>
 
 #include "ARender.h"
-#include "Utils.h"
 #include "Debug.h"
+#include "Utils.h"
 
 #define PHOTON_MAPPING 1
 
 #if PHOTON_MAPPING
-#   include "../dependencies/PhotonMap.h"
+#include "../dependencies/PhotonMap.h"
 #endif
 
-namespace raytracing{
+namespace raytracing {
 
-class RTRender: public AbstractRender
-{
-public:
-
-    Color specular(Ray r, Vector3d x, Vector3d n, const Drawable& obj, const Scene& scene){
+class RTRender : public AbstractRender {
+  public:
+    Color specular(Ray r, Vector3d x, Vector3d n, const Drawable &obj,
+                   const Scene &scene) {
         Color color;
 
         for (int i = 0; i < bouncing_ray; i++) {
@@ -28,34 +27,39 @@ public:
 
             Ray ray(x, direction.norm());
 
-            double t  = infinity();
-            int    id = 0;
-                scene.intersect(ray, t, id);
+            double t = infinity();
+            int id = 0;
+            scene.intersect(ray, t, id);
 
             const Drawable &obj2 = scene[id];
 
-        #if PHOTON_MAPPING
+#if PHOTON_MAPPING
+            const Sphere &sobj = (const Sphere &)obj;
+
             Vector3d newX = ray.origin() + ray.dest() * t;
             Vector3d newN = (newX - obj2.position()).norm();
 
-            Vector3d sirrad;
-            photon_map.irradiance_estimate(sirrad, newX, newN, distance, num_photons);
+            Vector3d irrad;
+            photon_map.irradiance_estimate(irrad, newX, newN, distance,
+                                           num_photons);
 
-            color = color + sirrad * obj2.color() + obj2.color() * obj2.color();
-        #else
+            color = color + obj.color() * obj2.light() +
+                    irrad * obj.color() / (sobj.radius() * sobj.radius());
+#else
             color = color + obj2.color() * obj2.color();
-        #endif
+#endif
         }
 
         return color / double(bouncing_ray);
     }
 
-    Color diffuse(Ray, Vector3d x, Vector3d n, const Drawable& obj, const Scene& scene){
+    Color diffuse(Ray, Vector3d x, Vector3d n, const Drawable &obj,
+                  const Scene &scene) {
         Color color;
 
         for (int i = 0; i < bouncing_ray; i++) {
             double theta = acos(sqrt(rand_num(0, 1)));
-            double phi   = 2 * M_PI * rand_num(0, 1);
+            double phi = 2 * M_PI * rand_num(0, 1);
 
             Vector3d temp;
             if (fabs(n.x()) > 0.1)
@@ -68,34 +72,38 @@ public:
             Vector3d w = n;
 
             Vector3d direction = u * cos(phi) * cos(theta) +
-                v * sin(phi) * cos(theta) + w * sin(theta);
+                                 v * sin(phi) * cos(theta) + w * sin(theta);
 
             // reflect
             Ray ray(x, direction.norm());
 
-            double t  = infinity();
-            int    id = 0;
-                scene.intersect(ray, t, id);
+            double t = infinity();
+            int id = 0;
+            scene.intersect(ray, t, id);
 
             const Drawable &obj2 = scene[id];
 
-        #if PHOTON_MAPPING
+#if PHOTON_MAPPING
+            const Sphere &sobj = (const Sphere &)obj;
+
             Vector3d newX = ray.origin() + ray.dest() * t;
             Vector3d newN = (newX - obj2.position()).norm();
 
             Vector3d irrad;
-            photon_map.irradiance_estimate(irrad, newX, newN, distance, num_photons);
+            photon_map.irradiance_estimate(irrad, newX, newN, distance,
+                                           num_photons);
 
-            color = color + obj.color() * obj2.light() + irrad * obj.color();
-        #else
+            color = color + obj.color() * obj2.light() +
+                    irrad * obj.color() / (sobj.radius() * sobj.radius());
+#else
             color = color + obj.color() * obj2.light();
-        #endif
+#endif
         }
         return color / double(bouncing_ray);
     }
 
-    Color shade(const Scene& scene, const Ray& r){
-        int   id = 0;
+    Color shade(const Scene &scene, const Ray &r) {
+        int id = 0;
         double t = 0;
 
         // Check collision
@@ -103,7 +111,7 @@ public:
             return Color(0, 0, 0);
 
         // retrieve object
-        const Drawable& obj = scene[id];
+        const Drawable &obj = scene[id];
 
         // Is it a light ?
         if (obj.emit_light())
@@ -113,7 +121,7 @@ public:
         Vector3d n = (x - obj.position()).norm();
 
         // Compute color in function of material
-        switch(obj.material()){
+        switch (obj.material()) {
         case Diffuse:
             return diffuse(r, x, n, obj, scene);
         case Specular:
@@ -124,10 +132,10 @@ public:
         }
     }
 
-    void render(const Scene& scene, const Camera& camera, PaintDevice& device){
-    #if PHOTON_MAPPING
+    void render(const Scene &scene, const Camera &camera, PaintDevice &device) {
+#if PHOTON_MAPPING
         emit_photons(scene);
-    #endif
+#endif
         int width = device.width();
         int height = device.height();
 
@@ -137,20 +145,21 @@ public:
         Vector3d cy = (cx % camera.orientation()).norm() * 0.5095;
         Color pix;
 
-        #pragma omp parallel for schedule(dynamic, 1) private(pix)
-        for(int y = 0; y < height; ++y) {
+#pragma omp parallel for schedule(dynamic, 1) private(pix)
+        for (int y = 0; y < height; ++y) {
             printf("\r%5.2f%%", 100. * y / (height - 1));
 
-            for(int x = 0; x < width; ++x) {
+            for (int x = 0; x < width; ++x) {
 
                 Vector3d cameraRayDir = cx * (double(x) / width - .5) +
-                                        cy * (double(y) / height - .5) + camera.orientation();
+                                        cy * (double(y) / height - .5) +
+                                        camera.orientation();
 
                 pix = shade(scene, Ray(camera.position(), cameraRayDir.norm()));
 
                 int idx = (height - y - 1) * width + x;
                 device[idx] = pix.to_rgb();
-             }
+            }
         }
 
         printf("\n");
@@ -160,18 +169,18 @@ public:
 
 #if PHOTON_MAPPING
 
-    double distance{0.5};
+    double distance{1};
     int num_photons{500000};
     int max_reflect{5};
 
     // probabitility of reflection
-    float pDiffuse  = 0.5;
+    float pDiffuse = 0.5;
     float pSpecular = 0.5;
 
     PhotonMap photon_map{num_photons * max_reflect};
-#   define MAX_PHOTONS num_photons * max_reflect
+#define MAX_PHOTONS num_photons *max_reflect
 
-    void emit_photons(const Scene& scene){
+    void emit_photons(const Scene &scene) {
         float x = 0, y = 0, z = 0;
         Vector3d power(1.0, 1.0, 1.0);
 
@@ -196,10 +205,10 @@ public:
         }
 
         photon_map.balance();
-        photon_map.scale_photon_power(1.0 / log(num_photons));
+        // photon_map.scale_photon_power(1.0 / num_photons);
     }
 
-    void trace_photon(const Scene& scene, Ray pr, Vec power, int depth) {
+    void trace_photon(const Scene &scene, Ray pr, Vec power, int depth) {
 
         if (depth >= max_reflect)
             return;
@@ -213,8 +222,8 @@ public:
 
         const Drawable &obj = scene[id];
 
-        Vector3d x   = pr.origin() + pr.dest() * t;
-        Vector3d n   = (x - obj.position()).norm();
+        Vector3d x = pr.origin() + pr.dest() * t;
+        Vector3d n = (x - obj.position()).norm();
         Vector3d dir;
         Vector3d reflect_power;
 
@@ -222,18 +231,18 @@ public:
         photon_map.store(power, pr.origin(), pr.dest());
 
         // Diffuse
-        if (nrand < pDiffuse){
+        if (nrand < pDiffuse) {
             dir = diffuse_reflection(n);
             reflect_power = power * obj.color() / pDiffuse;
         }
         // Specular
-        else if ((pDiffuse < nrand) && (nrand < (pDiffuse + pSpecular))){
+        else if ((pDiffuse < nrand) && (nrand < (pDiffuse + pSpecular))) {
             dir = pr.dest() - (n * n.dot(pr.dest())) * 2;
             reflect_power = power * obj.color() / pSpecular;
         }
         // absorb
-        else{
-            return ;
+        else {
+            return;
         }
 
         pr.set_origin(x);
@@ -254,9 +263,9 @@ public:
                 z = rand_num(0, 1);
             } while (x * x + y * y + z * z > 1);
 
-            x   = 2 * (x - 0.5);
-            y   = 2 * (y - 0.5);
-            z   = 2 * (z - 0.5);
+            x = 2 * (x - 0.5);
+            y = 2 * (y - 0.5);
+            z = 2 * (z - 0.5);
 
             dir = Vector3d(x, y, z);
 
@@ -265,9 +274,7 @@ public:
         return dir;
     }
 
-
 #endif
-
 };
 }
 
