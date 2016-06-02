@@ -8,6 +8,8 @@
 #include "Debug.h"
 #include "Utils.h"
 
+#include <omp.h>
+
 #define PHOTON_MAPPING 1
 
 #if PHOTON_MAPPING
@@ -144,6 +146,9 @@ class RTRender : public AbstractRender {
         Vector3d cx = Vector3d(width * 0.5095 / height, 0., 0.);
         Vector3d cy = (cx % camera.orientation()).norm() * 0.5095;
         Color pix;
+
+        printf("%i \n", omp_get_max_threads());
+        fflush(stdout);
 
 #pragma omp parallel for schedule(dynamic, 1) private(pix)
         for (int y = 0; y < height; ++y) {
